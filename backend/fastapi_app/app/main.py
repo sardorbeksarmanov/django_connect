@@ -17,3 +17,4 @@ app.include_router(follow_router)
 @app.get("/")
 async def root():
     return {"message": "Home Page"}
+

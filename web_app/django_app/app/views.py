@@ -4,16 +4,11 @@ from django.views import View
 from .forms import RegistrationForm, LoginForm
 from django.http import HttpResponse, JsonResponse
 
-
 class HomeView(View):
     def get(self, request):
         return render(request, 'home.html')
 
-
 class RegisterView(View):
-    def get(self, request):
-        return render(request, 'register.html')
-
     def get(self, request):
         form = RegistrationForm()
         return render(request, 'register.html', {'form': form})
@@ -33,14 +28,11 @@ class RegisterView(View):
                 'email': email
             }
             response = requests.post(url, json=data)
-            print(response.json())
-            if response.json()['status_code'] == 201:
+            if response.status_code == 201:
                 return HttpResponse('You have successfully registered')
             else:
-                return HttpResponse(f"Error:{response.json()['detail']}")
-        else:
-            return HttpResponse("Form is not valid")
-
+                return HttpResponse(f"Error: {response.json()['detail']}")
+        return HttpResponse("Form is not valid")
 
 class LoginView(View):
     def get(self, request):
@@ -61,45 +53,17 @@ class LoginView(View):
             response = requests.post(api_url, json=data)
 
             if response.status_code == 200:
-                return JsonResponse({'message': 'User registered successfully!', 'data': response.json()})
+                return JsonResponse({'message': 'Successfully logged in!', 'data': response.json()})
             else:
-                return JsonResponse({'error': 'Failed to login user', 'details': response.json()},
+                return JsonResponse({'error': 'Failed to login', 'details': response.json()},
                                     status=response.status_code)
-
 
 class PostGetView(View):
     def get(self, request):
-        return render(request, 'post.html')
-
-    def post(self, request):
-        caption = request.POST.get('caption')
-        image_path = request.POST.get('image_path')
-
-        api_url = 'http://127.0.0.2:8002/posts/create'
-
-        data = {
-            "caption": caption,
-            "image_path": image_path
-        }
-
-        response = requests.post(api_url, json=data)
-        if response.status_code == 200:
-            return render(request, 'post.html')
-
-        else:
-            return JsonResponse({'error': 'Failed to login user', 'details': response.json()},
-                                status=response.status_code)
-
-    def get(self, request, *args, **kwargs):
         page = requests.get("http://127.0.0.2:8002/posts/?size=2").json()['page']
         pages = requests.get("http://127.0.0.2:8002/posts/?size=2").json()["pages"]
 
         if page is not None:
-            if int(page) <= int(pages):
-                data = requests.get(f"http://127.0.0.2:8002/posts/?size=2").json()["items"]
-                return render(request, "post.html",
-                              context={"posts": data, "pages": pages, "page": 1, "next": 2, "previous": 0})
-
             data = requests.get(f"http://127.0.0.2:8002/posts/?page={page}&size=2").json()["items"]
             return render(request, "post.html",
                           context={"posts": data, "pages": pages, "page": page, "next": int(page) + 1,
